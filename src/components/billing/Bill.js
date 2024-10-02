@@ -25,7 +25,7 @@ import {
   FiSave,
   FiPrinter,
   FiX,
-  FiChevronsRight
+  FiChevronsRight,
 } from 'react-icons/fi';
 import { MdDelete } from 'react-icons/md';
 import { toast } from 'react-toastify';
@@ -34,24 +34,68 @@ import './Bill.css';
 
 const initBillObj = {
   items: [
-    { name: '', qty: '', price: '', total: '', hsn: '', batch: '', expiry: '', gst: '', tax: '' },
-    { name: '', qty: '', price: '', total: '', hsn: '', batch: '', expiry: '', gst: '', tax: '' },
+    {
+      name: '',
+      qty: '',
+      price: '',
+      total: '',
+      hsn: '',
+      batch: '',
+      expiry: '',
+      gst: '',
+      tax: '',
+    },
+    {
+      name: '',
+      qty: '',
+      price: '',
+      total: '',
+      hsn: '',
+      batch: '',
+      expiry: '',
+      gst: '',
+      tax: '',
+    },
   ],
   discount: '',
   payable_amount: '',
   sub_total: '',
   total_gst: '',
   cgst: '',
-  sgst: ''
+  sgst: '',
 };
 
 const resetInitBillObj = {
   items: [
-    { name: '', qty: '', price: '', total: '' },
-    { name: '', qty: '', price: '', total: '' },
+    {
+      name: '',
+      qty: '',
+      price: '',
+      total: '',
+      hsn: '',
+      batch: '',
+      expiry: '',
+      gst: '',
+      tax: '',
+    },
+    {
+      name: '',
+      qty: '',
+      price: '',
+      total: '',
+      hsn: '',
+      batch: '',
+      expiry: '',
+      gst: '',
+      tax: '',
+    },
   ],
   discount: '',
   payable_amount: '',
+  sub_total: '',
+  total_gst: '',
+  cgst: '',
+  sgst: '',
 };
 
 const initBillerInfo = {
@@ -162,39 +206,41 @@ const Bill = () => {
     let _billItems = [...bill.items];
     _billItems[index].hsn = evt.target.value;
     setBill({ ...bill, items: _billItems });
-  }
+  };
 
   const onChangeItemBatchNoHandler = (evt, index) => {
     let _billItems = [...bill.items];
     _billItems[index].batch = evt.target.value;
     setBill({ ...bill, items: _billItems });
-  }
+  };
 
   const onChangeItemExpiryDateHandler = (evt, index) => {
     let _billItems = [...bill.items];
     _billItems[index].expiry = evt.target.value;
     setBill({ ...bill, items: _billItems });
-  }
+  };
 
   const onChangeItemGstHandler = (evt, index) => {
     let _billItems = [...bill.items];
     const _gst = parseFloat(evt.target.value);
     const _qty = parseFloat(_billItems[index].qty) || 0;
     const _price = parseFloat(_billItems[index].price) || 0;
-    const _total = (_price * _qty) + ((_gst && _gst > 0) ? ((_price * _qty * _gst) / 100) : 0); 
+    const _total =
+      _price * _qty + (_gst && _gst > 0 ? (_price * _qty * _gst) / 100 : 0);
     _billItems[index].gst = _gst;
     _billItems[index].total = _total.toFixed(2);
     _billItems[index].tax = (_price * _qty).toFixed(2);
     setBill({ ...bill, items: _billItems });
     calculateTotalPayableAmount();
-  }
+  };
 
   const onChangeItemQtyHandler = (evt, index) => {
     let _billItems = [...bill.items];
     const _qty = parseFloat(evt.target.value);
     const _price = parseFloat(_billItems[index].price) || 0;
     const _gst = parseFloat(_billItems[index].gst) || 0;
-    const _total = (_price * _qty) + ((_gst && _gst > 0) ? ((_price * _qty * _gst) / 100) : 0);
+    const _total =
+      _price * _qty + (_gst && _gst > 0 ? (_price * _qty * _gst) / 100 : 0);
     _billItems[index].qty = _qty;
     _billItems[index].total = _total.toFixed(2);
     _billItems[index].tax = (_price * _qty).toFixed(2);
@@ -207,7 +253,8 @@ const Bill = () => {
     const _price = parseFloat(evt.target.value);
     const _qty = parseFloat(_billItems[index].qty) || 0;
     const _gst = parseFloat(_billItems[index].gst) || 0;
-    const _total = (_price * _qty) + ((_gst && _gst > 0) ? ((_price * _qty * _gst) / 100) : 0);
+    const _total =
+      _price * _qty + (_gst && _gst > 0 ? (_price * _qty * _gst) / 100 : 0);
     _billItems[index].price = _price;
     _billItems[index].total = _total.toFixed(2);
     _billItems[index].tax = (_price * _qty).toFixed(2);
@@ -252,18 +299,36 @@ const Bill = () => {
   const calculateTotalPayableAmount = useCallback(() => {
     let _payableAmount = 0;
     let _discount = parseFloat(bill.discount) || 0;
+    let _subTotal = 0;
+    let _totalGst = 0;
+    let _eachGst = 0;
 
     if (bill.items.length > 0) {
       bill.items.forEach((item) => {
         let total = parseFloat(item.total) || 0;
+        let taxable = parseFloat(item.tax) || 0;
         _payableAmount += total;
+        _subTotal += taxable;
       });
     }
 
     _payableAmount -= _discount;
+    if (_subTotal > 0) {
+      _totalGst = _payableAmount - _subTotal;
+      if (_discount > 0) {
+        _totalGst = (_payableAmount - _subTotal) + _discount;
+      }
+    }
+    if (_totalGst > 0) {
+      _eachGst = _totalGst / 2;
+    }
     setBill((prevBill) => ({
       ...prevBill,
       payable_amount: _payableAmount.toFixed(2),
+      sub_total: _subTotal.toFixed(2),
+      total_gst: _totalGst.toFixed(2),
+      cgst: _eachGst.toFixed(2),
+      sgst: _eachGst.toFixed(2),
     }));
   }, [bill.items, bill.discount]);
 
@@ -316,13 +381,13 @@ const Bill = () => {
 
   const nextBillProceedHandler = () => {
     Swal.fire({
-      title: "Are you sure?",
-      text: "You want to proceed for next billing?",
-      icon: "question",
+      title: 'Are you sure?',
+      text: 'You want to proceed for next billing?',
+      icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: "#0d6efd",
-      cancelButtonColor: "#dc3545",
-      confirmButtonText: "Yes"
+      confirmButtonColor: '#0d6efd',
+      cancelButtonColor: '#dc3545',
+      confirmButtonText: 'Yes',
     }).then((result) => {
       if (result.isConfirmed) {
         setCustomerInfo(initCustomerInfo);
@@ -330,7 +395,7 @@ const Bill = () => {
         setIsBillModalShow(false);
       }
     });
-  }
+  };
 
   /** Biller Modal */
   const billerInfonButtonHandler = () => {
@@ -414,7 +479,7 @@ const Bill = () => {
           </Col>
         </Row>
         <Row className='mt-3'>
-          <Col xs={12} sm={12} md={6}>
+          <Col xs={12} sm={12} md={5}>
             <Card>
               <Card.Header>
                 <Row>
@@ -463,7 +528,8 @@ const Bill = () => {
               </Card.Body>
             </Card>
           </Col>
-          <Col xs={12} sm={12} md={6}>
+          <Col xs={12} sm={12} md={2}></Col>
+          <Col xs={12} sm={12} md={5}>
             <Card>
               <Card.Header>
                 <Row>
@@ -758,7 +824,7 @@ const Bill = () => {
                     })}
                   <Row>
                     <Col xs={12} sm={12} md={7}></Col>
-                    <Col xs={12} sm={12} md={2} style={{'textAlign':'right'}}>
+                    <Col xs={12} sm={12} md={2} style={{ textAlign: 'right' }}>
                       <strong>Sub Total:</strong>
                     </Col>
                     <Col xs={12} sm={12} md={2}>
@@ -778,7 +844,7 @@ const Bill = () => {
                   </Row>
                   <Row>
                     <Col xs={12} sm={12} md={7}></Col>
-                    <Col xs={12} sm={12} md={2} style={{'textAlign':'right'}}>
+                    <Col xs={12} sm={12} md={2} style={{ textAlign: 'right' }}>
                       <strong>Total GST:</strong>
                     </Col>
                     <Col xs={12} sm={12} md={2}>
@@ -798,7 +864,7 @@ const Bill = () => {
                   </Row>
                   <Row>
                     <Col xs={12} sm={12} md={7}></Col>
-                    <Col xs={12} sm={12} md={2} style={{'textAlign':'right'}}>
+                    <Col xs={12} sm={12} md={2} style={{ textAlign: 'right' }}>
                       <strong>CGST:</strong>
                     </Col>
                     <Col xs={12} sm={12} md={2}>
@@ -818,7 +884,7 @@ const Bill = () => {
                   </Row>
                   <Row>
                     <Col xs={12} sm={12} md={7}></Col>
-                    <Col xs={12} sm={12} md={2} style={{'textAlign':'right'}}>
+                    <Col xs={12} sm={12} md={2} style={{ textAlign: 'right' }}>
                       <strong>SGST:</strong>
                     </Col>
                     <Col xs={12} sm={12} md={2}>
@@ -838,7 +904,7 @@ const Bill = () => {
                   </Row>
                   <Row>
                     <Col xs={12} sm={12} md={7}></Col>
-                    <Col xs={12} sm={12} md={2} style={{'textAlign':'right'}}>
+                    <Col xs={12} sm={12} md={2} style={{ textAlign: 'right' }}>
                       <strong>Discount:</strong>
                     </Col>
                     <Col xs={12} sm={12} md={2}>
@@ -856,8 +922,8 @@ const Bill = () => {
                   </Row>
                   <Row>
                     <Col xs={12} sm={12} md={7}></Col>
-                    <Col xs={12} sm={12} md={2} style={{'textAlign':'right'}}>
-                      <strong>Net Total:</strong>
+                    <Col xs={12} sm={12} md={2} style={{ textAlign: 'right' }}>
+                      <strong>Net Amount:</strong>
                     </Col>
                     <Col xs={12} sm={12} md={2}>
                       <Form.Group className='mb-3' controlId='payableAmount'>
@@ -918,7 +984,9 @@ const Bill = () => {
         </Row>
         <Row className='mt-5 mb-2'>
           <Col md={12}>
-            <p style={{textAlign: 'center', color: '#ccc', fontSize: '14px'}}>Sponsored By: Arindam Roy | 9836395513</p>
+            <p style={{ textAlign: 'center', color: '#ccc', fontSize: '14px' }}>
+              Sponsored By: Arindam Roy | 9836395513
+            </p>
           </Col>
         </Row>
       </Container>
@@ -929,140 +997,220 @@ const Bill = () => {
         keyboard={false}
         show={isBillModalShow}
         onHide={billModalCloseHandler}
-        size='lg'
+        size='xl'
         centered
         scrollable
       >
-        <Modal.Body
-          ref={printRef}
-          style={{ marginTop: '20px', padding: '15px' }}
-        >
-          <Row className='bill-print-header'>
-            <Col xs={12} sm={12} md={6} style={{ width: '50%' }}>
-              <p>
-                <span className='bill-name'>
-                  <strong>{billerInfo.name}</strong>
-                </span>
-              </p>
-              <p>
-                <span className='bill-address'><strong>Address:</strong> {billerInfo.address}</span>
-              </p>
-              {billerInfo.gst_no !== '' && (
+        <Modal.Body>
+          <div ref={printRef} style={{ marginTop: '20px', padding: '15px' }}>
+            <div className='client-logo-box'><img src="./client-logo.png" className='client-logo' alt='client-logo' /></div>
+            <Row className='bill-print-header'>
+              <Col xs={12} sm={12} md={6} style={{ width: '50%' }}>
                 <p>
-                  <span className='bill-gst'><strong>GST No:</strong> {billerInfo.gst_no}</span>
+                  <span className='bill-name'>
+                    <strong>{billerInfo.name}</strong>
+                  </span>
                 </p>
-              )}
-            </Col>
-            <Col
-              xs={12}
-              sm={12}
-              md={6}
-              className='onex-text-content-right-align'
-              style={{ width: '50%' }}
-            >
-              <p>
-                <span className='bill-phno'><strong>Phone No:</strong> {billerInfo.phno}</span>{' '}
-              </p>
-              <p>
-                {billerInfo.email !== '' && (
-                  <span className='bill-email'><strong>Email Id:</strong> {billerInfo.email}</span>
+                <p>
+                  <span className='bill-address'>
+                    <strong>Address:</strong> {billerInfo.address}
+                  </span>
+                </p>
+                {billerInfo.gst_no !== '' && (
+                  <p>
+                    <span className='bill-gst'>
+                      <strong>GST No:</strong> {billerInfo.gst_no}
+                    </span>
+                  </p>
                 )}
-              </p>
-            </Col>
-          </Row>
-          <hr />
-          <Row className='bill-print-header'>
-            <Col md={6} style={{width: '50%'}}>
-              <p>
-                <span className='bill-name'>
-                  <strong>{customerInfo.name}</strong> 
-                </span>
-              </p>
-              <p>
-                <span className='bill-phno'><strong>Mobile No:</strong> {customerInfo.phno}</span>{' '}
-              </p>
-              {customerInfo.email !== '' && (
-                <p><span className='bill-email'><strong>Email:</strong> {customerInfo.email}</span></p>
-              )}
-              <p>
-                <span className='bill-address'><strong>Address:</strong> {customerInfo.address}</span>
-              </p>
-            </Col>
-            <Col md={6} className='onex-text-content-right-align' style={{width: '50%'}}>
-              <p>
-                <strong>Invoice No:</strong>{' '}
-                {Math.floor(Math.random() * (999999 - 100000 + 1)) +
-                  100000}
-              </p>
-              <p>
-                <strong>Date:</strong>{' '}
-                {new Date()
-                  .toLocaleDateString('en-GB')
-                  .replace(/\//g, '/')}
-              </p>
-            </Col>
-          </Row>
-          <Row className='mt-2'>
-            <Col>
-              <Table striped bordered hover size='sm' style={{ width: '100%' }}>
-                <thead className='bill-print-thead'>
-                  <tr>
-                    <th colSpan={5} style={{ backgroundColor: '#ddd' }}>
-                      Bill Items
-                    </th>
-                  </tr>
-                  <tr>
-                    <th>SL.</th>
-                    <th>Items</th>
-                    <th>QTY</th>
-                    <th>Price</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody className='bill-print-tbody'>
-                  {bill.items.length > 0 &&
-                    bill.items.map((item, index) => {
-                      return (
-                        <tr key={'bill-item-tabrow' + index}>
-                          <td>{index + 1}</td>
-                          <td>{item.name}</td>
-                          <td>{item.qty}</td>
-                          <td>{item.price}</td>
-                          <td>{item.total}</td>
-                        </tr>
-                      );
-                    })}
-                  <tr>
-                    <th colSpan={4} style={{ textAlign: 'right' }}>
-                      Discount
-                    </th>
-                    <td>{parseFloat(bill.discount).toFixed(2) || '0.00'}</td>
-                  </tr>
-                  <tr>
-                    <th colSpan={4} style={{ textAlign: 'right' }}>
-                      Total Payable Amount
-                    </th>
-                    <td>{bill.payable_amount || '0.00'}</td>
-                  </tr>
-                </tbody>
-                <tfoot className='bill-print-tfoot'>
-                  <tr>
-                    <th colSpan={5}>
-                      <span style={{color: '#ccc'}}>In Words:</span> <br /> <span className='number-text'>{toWords(bill.payable_amount || '0.00')}</span>
-                    </th>
-                  </tr>
-                  <tr>
-                    <th
-                      colSpan={5}
-                      style={{ textAlign: 'right', backgroundColor: '#ccc' }}
-                    >
-                      Thank You!
-                    </th>
-                  </tr>
-                </tfoot>
-              </Table>
-            </Col>
-          </Row>
+              </Col>
+              <Col
+                xs={12}
+                sm={12}
+                md={6}
+                className='onex-text-content-right-align'
+                style={{ width: '50%' }}
+              >
+                <p>
+                  <span className='bill-phno'>
+                    <strong>Phone No:</strong> {billerInfo.phno}
+                  </span>{' '}
+                </p>
+                <p>
+                  {billerInfo.email !== '' && (
+                    <span className='bill-email'>
+                      <strong>Email Id:</strong> {billerInfo.email}
+                    </span>
+                  )}
+                </p>
+              </Col>
+            </Row>
+            <hr />
+            <Row className='bill-print-header'>
+              <Col md={6} style={{ width: '50%' }}>
+                <p>
+                  <span className='bill-name'>
+                    <strong>{customerInfo.name}</strong>
+                  </span>
+                </p>
+                <p>
+                  <span className='bill-phno'>
+                    <strong>Mobile No:</strong> {customerInfo.phno}
+                  </span>{' '}
+                </p>
+                {customerInfo.email !== '' && (
+                  <p>
+                    <span className='bill-email'>
+                      <strong>Email:</strong> {customerInfo.email}
+                    </span>
+                  </p>
+                )}
+                <p>
+                  <span className='bill-address'>
+                    <strong>Address:</strong> {customerInfo.address}
+                  </span>
+                </p>
+              </Col>
+              <Col
+                md={6}
+                className='onex-text-content-right-align'
+                style={{ width: '50%' }}
+              >
+                <p>
+                  <strong>Invoice No:</strong>{' '}
+                  {Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000}
+                </p>
+                <p>
+                  <strong>Date:</strong>{' '}
+                  {new Date().toLocaleDateString('en-GB').replace(/\//g, '/')}
+                </p>
+              </Col>
+            </Row>
+            <Row className='mt-2'>
+              <Col>
+                <Table
+                  striped
+                  bordered
+                  hover
+                  size='sm'
+                  style={{ width: '100%' }}
+                >
+                  <thead className='bill-print-thead'>
+                    <tr>
+                      <th colSpan={10} style={{ backgroundColor: '#ddd' }}>
+                        Bill Items
+                      </th>
+                    </tr>
+                    <tr>
+                      <th>SL.</th>
+                      <th>Items</th>
+                      <th>QTY</th>
+                      <th>HSN</th>
+                      <th>Batch No</th>
+                      <th>Expiry Date</th>
+                      <th>MRP</th>
+                      <th>GST(%)</th>
+                      <th>Taxable</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className='bill-print-tbody'>
+                    {bill.items.length > 0 &&
+                      bill.items.map((item, index) => {
+                        return (
+                          <tr key={'bill-item-tabrow' + index}>
+                            <td>{index + 1}</td>
+                            <td>{item.name}</td>
+                            <td>{item.qty}</td>
+                            <td>{item.hsn}</td>
+                            <td>{item.batch}</td>
+                            <td>{item.expiry}</td>
+                            <td>{parseFloat(item.price).toFixed(2)}</td>
+                            <td>{item.gst !== '' ? item.gst + '%' : ''}</td>
+                            <td>{item.tax}</td>
+                            <td>{item.total}</td>
+                          </tr>
+                        );
+                      })}
+                    <tr>
+                      <th colSpan={9} style={{ textAlign: 'right' }}>
+                        Sub Total
+                      </th>
+                      <td>
+                        {bill.sub_total
+                          ? parseFloat(bill.sub_total).toFixed(2) || '0.00'
+                          : '0.00'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th colSpan={9} style={{ textAlign: 'right' }}>
+                        Total GST
+                      </th>
+                      <td>
+                        {bill.total_gst
+                          ? parseFloat(bill.total_gst).toFixed(2) || '0.00'
+                          : '0.00'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th colSpan={9} style={{ textAlign: 'right' }}>
+                        SGST
+                      </th>
+                      <td>
+                        {bill.sgst
+                          ? parseFloat(bill.sgst).toFixed(2) || '0.00'
+                          : '0.00'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th colSpan={9} style={{ textAlign: 'right' }}>
+                        CGST
+                      </th>
+                      <td>
+                        {bill.cgst
+                          ? parseFloat(bill.cgst).toFixed(2) || '0.00'
+                          : '0.00'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th colSpan={9} style={{ textAlign: 'right' }}>
+                        Discount
+                      </th>
+                      <td>
+                        {bill.discount
+                          ? parseFloat(bill.discount).toFixed(2) || '0.00'
+                          : '0.00'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th colSpan={9} style={{ textAlign: 'right' }}>
+                        Total Payable Amount
+                      </th>
+                      <td>{bill.payable_amount || '0.00'}</td>
+                    </tr>
+                  </tbody>
+                  <tfoot className='bill-print-tfoot'>
+                    <tr>
+                      <th colSpan={10}>
+                        <span style={{ color: '#ccc' }}>In Words:</span> <br />{' '}
+                        <span className='number-text'>
+                          {toWords(bill.payable_amount || '0.00')}
+                        </span>
+                      </th>
+                    </tr>
+                    <tr>
+                      <th
+                        colSpan={10}
+                        style={{ textAlign: 'right', backgroundColor: '#ccc' }}
+                      >
+                        Thank You!
+                      </th>
+                    </tr>
+                  </tfoot>
+                </Table>
+              </Col>
+            </Row>
+          </div>
         </Modal.Body>
         <Modal.Footer>
           <Button variant='danger' onClick={billModalCloseHandler}>

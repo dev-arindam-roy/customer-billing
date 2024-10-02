@@ -40,3 +40,11 @@
 .bill-address {
     line-height: 14px;
 }
+.client-logo {
+    width: 100px;
+    border: 2px solid #000;
+    border-radius: 5px;
+}
+.client-logo-box {
+    margin-bottom: 15px;
+}
