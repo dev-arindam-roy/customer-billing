@@ -111,6 +111,7 @@ const initCustomerInfo = {
   email: '',
   phno: '',
   address: '',
+  bill_date: ''
 };
 
 const Bill = () => {
@@ -225,11 +226,10 @@ const Bill = () => {
     const _gst = parseFloat(evt.target.value);
     const _qty = parseFloat(_billItems[index].qty) || 0;
     const _price = parseFloat(_billItems[index].price) || 0;
-    const _total =
-      _price * _qty + (_gst && _gst > 0 ? (_price * _qty * _gst) / 100 : 0);
+    const _total =_price * _qty;
     _billItems[index].gst = _gst;
     _billItems[index].total = _total.toFixed(2);
-    _billItems[index].tax = (_price * _qty).toFixed(2);
+    _billItems[index].tax = ((_price - ((_price * _gst) / 100)) * _qty).toFixed(2);
     setBill({ ...bill, items: _billItems });
     calculateTotalPayableAmount();
   };
@@ -239,11 +239,10 @@ const Bill = () => {
     const _qty = parseFloat(evt.target.value);
     const _price = parseFloat(_billItems[index].price) || 0;
     const _gst = parseFloat(_billItems[index].gst) || 0;
-    const _total =
-      _price * _qty + (_gst && _gst > 0 ? (_price * _qty * _gst) / 100 : 0);
+    const _total =_price * _qty;
     _billItems[index].qty = _qty;
     _billItems[index].total = _total.toFixed(2);
-    _billItems[index].tax = (_price * _qty).toFixed(2);
+    _billItems[index].tax = ((_price - ((_price * _gst) / 100)) * _qty).toFixed(2);
     setBill({ ...bill, items: _billItems });
     calculateTotalPayableAmount();
   };
@@ -315,9 +314,6 @@ const Bill = () => {
     _payableAmount -= _discount;
     if (_subTotal > 0) {
       _totalGst = _payableAmount - _subTotal;
-      if (_discount > 0) {
-        _totalGst = (_payableAmount - _subTotal) + _discount;
-      }
     }
     if (_totalGst > 0) {
       _eachGst = _totalGst / 2;
@@ -571,12 +567,18 @@ const Bill = () => {
                     </tr>
                     <tr>
                       <th>Date:</th>
+                      <td>{customerInfo.bill_date ? new Date(customerInfo.bill_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '---'}</td>
+                    </tr>
+                    {/*
+                    <tr>
+                      <th>Date:</th>
                       <td>
                         {new Date()
                           .toLocaleDateString('en-GB')
                           .replace(/\//g, '/')}
                       </td>
                     </tr>
+                    */}
                   </tbody>
                 </Table>
               </Card.Body>
@@ -902,6 +904,7 @@ const Bill = () => {
                       </Form.Group>
                     </Col>
                   </Row>
+                  {/**
                   <Row>
                     <Col xs={12} sm={12} md={7}></Col>
                     <Col xs={12} sm={12} md={2} style={{ textAlign: 'right' }}>
@@ -920,6 +923,7 @@ const Bill = () => {
                       </Form.Group>
                     </Col>
                   </Row>
+                  **/}
                   <Row>
                     <Col xs={12} sm={12} md={7}></Col>
                     <Col xs={12} sm={12} md={2} style={{ textAlign: 'right' }}>
@@ -1082,7 +1086,7 @@ const Bill = () => {
                 </p>
                 <p>
                   <strong>Date:</strong>{' '}
-                  {new Date().toLocaleDateString('en-GB').replace(/\//g, '/')}
+                  {customerInfo.bill_date ? new Date(customerInfo.bill_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : new Date().toLocaleDateString('en-GB').replace(/\//g, '/')}
                 </p>
               </Col>
             </Row>
@@ -1172,6 +1176,7 @@ const Bill = () => {
                           : '0.00'}
                       </td>
                     </tr>
+                    {/**
                     <tr>
                       <th colSpan={9} style={{ textAlign: 'right' }}>
                         Discount
@@ -1182,6 +1187,7 @@ const Bill = () => {
                           : '0.00'}
                       </td>
                     </tr>
+                    **/}
                     <tr>
                       <th colSpan={9} style={{ textAlign: 'right' }}>
                         Total Payable Amount
@@ -1456,6 +1462,21 @@ const Bill = () => {
                       setCustomerInfo({
                         ...customerInfo,
                         address: e.target.value,
+                      })
+                    }
+                  />
+                </Form.Group>
+                <Form.Group className='mb-3' controlId='customerBillDate'>
+                  <Form.Control
+                    type='date'
+                    name='customer_bill_date'
+                    placeholder='Bill Date'
+                    value={customerInfo.bill_date}
+                    required
+                    onChange={(e) =>
+                      setCustomerInfo({
+                        ...customerInfo,
+                        bill_date: e.target.value,
                       })
                     }
                   />
