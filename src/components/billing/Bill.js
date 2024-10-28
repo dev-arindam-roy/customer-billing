@@ -229,7 +229,8 @@ const Bill = () => {
     const _total =_price * _qty;
     _billItems[index].gst = _gst;
     _billItems[index].total = _total.toFixed(2);
-    _billItems[index].tax = ((_price - ((_price * _gst) / 100)) * _qty).toFixed(2);
+    //_billItems[index].tax = ((_price - ((_price * _gst) / 100)) * _qty).toFixed(2);
+    _billItems[index].tax = (_price / (1 + (_gst / 100))).toFixed(2);
     setBill({ ...bill, items: _billItems });
     calculateTotalPayableAmount();
   };
@@ -242,7 +243,8 @@ const Bill = () => {
     const _total =_price * _qty;
     _billItems[index].qty = _qty;
     _billItems[index].total = _total.toFixed(2);
-    _billItems[index].tax = ((_price - ((_price * _gst) / 100)) * _qty).toFixed(2);
+    //_billItems[index].tax = ((_price - ((_price * _gst) / 100)) * _qty).toFixed(2);
+    _billItems[index].tax = (_price / (1 + (_gst / 100))).toFixed(2);
     setBill({ ...bill, items: _billItems });
     calculateTotalPayableAmount();
   };
@@ -1007,7 +1009,7 @@ const Bill = () => {
       >
         <Modal.Body>
           <div ref={printRef} style={{ marginTop: '20px', padding: '15px' }}>
-            <div className='client-logo-box'><img src="./client-logo.png" className='client-logo' alt='client-logo' /></div>
+            <div className='client-logo-box'><img src="{window.location.origin + '/client-logo.png'}" className='client-logo' alt='client-logo' /></div>
             <Row className='bill-print-header'>
               <Col xs={12} sm={12} md={6} style={{ width: '50%' }}>
                 <p>
