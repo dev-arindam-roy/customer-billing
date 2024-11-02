@@ -10,6 +10,7 @@ import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import Table from 'react-bootstrap/Table';
+import Logo from '../../assets/logo.png';
 import {
   FiLogOut,
   FiArchive,
@@ -1009,7 +1010,7 @@ const Bill = () => {
       >
         <Modal.Body>
           <div ref={printRef} style={{ marginTop: '20px', padding: '15px' }}>
-            <div className='client-logo-box'><img src="{window.location.origin + '/client-logo.png'}" className='client-logo' alt='client-logo' /></div>
+            <div className='client-logo-box'><img src={Logo} className='client-logo' alt='client-logo' /></div>
             <Row className='bill-print-header'>
               <Col xs={12} sm={12} md={6} style={{ width: '50%' }}>
                 <p>
