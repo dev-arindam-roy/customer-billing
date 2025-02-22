@@ -105,6 +105,7 @@ const initBillerInfo = {
   phno: '',
   address: '',
   gst_no: '',
+  dl_no: ''
 };
 
 const initCustomerInfo = {
@@ -231,7 +232,7 @@ const Bill = () => {
     _billItems[index].gst = _gst;
     _billItems[index].total = _total.toFixed(2);
     //_billItems[index].tax = ((_price - ((_price * _gst) / 100)) * _qty).toFixed(2);
-    _billItems[index].tax = (_price / (1 + (_gst / 100))).toFixed(2);
+    _billItems[index].tax = ((_price / (1 + (_gst / 100))) * _qty).toFixed(2);
     setBill({ ...bill, items: _billItems });
     calculateTotalPayableAmount();
   };
@@ -245,7 +246,7 @@ const Bill = () => {
     _billItems[index].qty = _qty;
     _billItems[index].total = _total.toFixed(2);
     //_billItems[index].tax = ((_price - ((_price * _gst) / 100)) * _qty).toFixed(2);
-    _billItems[index].tax = (_price / (1 + (_gst / 100))).toFixed(2);
+    _billItems[index].tax = ((_price / (1 + (_gst / 100))) * _qty).toFixed(2);
     setBill({ ...bill, items: _billItems });
     calculateTotalPayableAmount();
   };
@@ -443,6 +444,23 @@ const Bill = () => {
     setIsCustomerModalShow(false);
   };
 
+  const convertToWords = (num) => {
+    if (!num) return '';
+  
+    const [integerPart, decimalPart] = num.toString().split('.');
+  
+    let words = toWords(parseInt(integerPart));
+  
+    if (decimalPart) {
+      words += ' point';
+      for (let digit of decimalPart) {
+        words += ' ' + toWords(parseInt(digit));
+      }
+    }
+  
+    return words + ' rupees.';
+  };
+
   return (
     <>
       <Container fluid>
@@ -521,6 +539,10 @@ const Bill = () => {
                     <tr>
                       <th>GST No:</th>
                       <td>{billerInfo.gst_no || '---'}</td>
+                    </tr>
+                    <tr>
+                      <th>D.L No:</th>
+                      <td>{billerInfo.dl_no || '---'}</td>
                     </tr>
                   </tbody>
                 </Table>
@@ -740,7 +762,8 @@ const Bill = () => {
                                 type='number'
                                 name={'bill_item_price[' + index + ']'}
                                 value={item.price}
-                                min={1}
+                                min={0.01}
+                                step={0.01}
                                 placeholder='Price'
                                 required
                                 onChange={(e) =>
@@ -763,7 +786,8 @@ const Bill = () => {
                                 type='number'
                                 name={'bill_item_gst[' + index + ']'}
                                 value={item.gst}
-                                min={1}
+                                min={0.01}
+                                step={0.01}
                                 placeholder='GST'
                                 required
                                 onChange={(e) =>
@@ -786,7 +810,8 @@ const Bill = () => {
                                 type='number'
                                 name={'bill_item_tax[' + index + ']'}
                                 value={item.tax}
-                                min={1}
+                                min={0.01}
+                                step={0.01}
                                 placeholder='Taxable'
                                 disabled
                                 readOnly
@@ -808,7 +833,8 @@ const Bill = () => {
                                 type='number'
                                 name={'bill_item_total[' + index + ']'}
                                 value={item.total}
-                                min={1}
+                                min={0.01}
+                                step={0.01}
                                 placeholder='Total'
                                 disabled
                                 readOnly
@@ -832,7 +858,7 @@ const Bill = () => {
                     <Col xs={12} sm={12} md={2} style={{ textAlign: 'right' }}>
                       <strong>Sub Total:</strong>
                     </Col>
-                    <Col xs={12} sm={12} md={2}>
+                    <Col xs={12} sm={12} md={1}>
                       <Form.Group className='mb-3' controlId='subTotal'>
                         <Form.Control
                           type='number'
@@ -840,6 +866,20 @@ const Bill = () => {
                           value={bill.sub_total || '0'}
                           min={1}
                           placeholder='Sub Total'
+                          disabled
+                          readOnly
+                          required
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} sm={12} md={1}>
+                      <Form.Group className='mb-3' controlId='subTotal'>
+                        <Form.Control
+                          type='number'
+                          name='payable_amount'
+                          value={bill.payable_amount || '0'}
+                          min={1}
+                          placeholder='Payable Amount'
                           disabled
                           readOnly
                           required
@@ -1030,6 +1070,13 @@ const Bill = () => {
                     </span>
                   </p>
                 )}
+                {billerInfo.dl_no !== '' && (
+                  <p>
+                    <span className='bill-gst'>
+                      <strong>D.L No:</strong> {billerInfo.dl_no}
+                    </span>
+                  </p>
+                )}
               </Col>
               <Col
                 xs={12}
@@ -1140,40 +1187,41 @@ const Bill = () => {
                         );
                       })}
                     <tr>
-                      <th colSpan={9} style={{ textAlign: 'right' }}>
-                        Sub Total
+                      <th colSpan={8} style={{ textAlign: 'right' }}>
+                        SUB TOTAL
                       </th>
                       <td>
                         {bill.sub_total
                           ? parseFloat(bill.sub_total).toFixed(2) || '0.00'
                           : '0.00'}
                       </td>
+                      <td>{bill.payable_amount || '0.00'}</td>
                     </tr>
                     <tr>
-                      <th colSpan={9} style={{ textAlign: 'right' }}>
-                        Total GST
+                      <th colSpan={8} style={{ textAlign: 'right' }}>
+                        TOTAL GST TAKEN
                       </th>
-                      <td>
+                      <td colSpan={2}>
                         {bill.total_gst
                           ? parseFloat(bill.total_gst).toFixed(2) || '0.00'
                           : '0.00'}
                       </td>
                     </tr>
                     <tr>
-                      <th colSpan={9} style={{ textAlign: 'right' }}>
+                      <th colSpan={8} style={{ textAlign: 'right' }}>
                         SGST
                       </th>
-                      <td>
+                      <td colSpan={2}>
                         {bill.sgst
                           ? parseFloat(bill.sgst).toFixed(2) || '0.00'
                           : '0.00'}
                       </td>
                     </tr>
                     <tr>
-                      <th colSpan={9} style={{ textAlign: 'right' }}>
+                      <th colSpan={8} style={{ textAlign: 'right' }}>
                         CGST
                       </th>
-                      <td>
+                      <td colSpan={2}>
                         {bill.cgst
                           ? parseFloat(bill.cgst).toFixed(2) || '0.00'
                           : '0.00'}
@@ -1192,10 +1240,10 @@ const Bill = () => {
                     </tr>
                     **/}
                     <tr>
-                      <th colSpan={9} style={{ textAlign: 'right' }}>
-                        Total Payable Amount
+                      <th colSpan={8} style={{ textAlign: 'right' }}>
+                        TOTAL PAYABLE AMOUNT
                       </th>
-                      <td>{bill.payable_amount || '0.00'}</td>
+                      <td colSpan={2}>{bill.payable_amount || '0.00'}</td>
                     </tr>
                   </tbody>
                   <tfoot className='bill-print-tfoot'>
@@ -1203,7 +1251,7 @@ const Bill = () => {
                       <th colSpan={10}>
                         <span style={{ color: '#ccc' }}>In Words:</span> <br />{' '}
                         <span className='number-text'>
-                          {toWords(bill.payable_amount || '0.00')}
+                          {convertToWords(bill.payable_amount || '0.00')}
                         </span>
                       </th>
                     </tr>
@@ -1218,6 +1266,13 @@ const Bill = () => {
                   </tfoot>
                 </Table>
               </Col>
+            </Row>
+            <Row className='mt-3'>
+              <Col md={12}>⁠N.B:-GOODS ONCE SOLD WILL NOT BE TAKEN BACK OR REPLACED.</Col>
+            </Row>
+            <Row style={{marginTop: '100px'}}>
+              <Col md={6}>CHECKEDBY</Col>
+              <Col md={6} className='text-end'>SIGNATURE</Col>
             </Row>
           </div>
         </Modal.Body>
@@ -1375,6 +1430,17 @@ const Bill = () => {
                     value={billerInfo.gst_no}
                     onChange={(e) =>
                       setBillerInfo({ ...billerInfo, gst_no: e.target.value })
+                    }
+                  />
+                </Form.Group>
+                <Form.Group className='mb-3' controlId='billerDlNo'>
+                  <Form.Control
+                    type='text'
+                    name='biller_dlno'
+                    placeholder='D.L No'
+                    value={billerInfo.dl_no}
+                    onChange={(e) =>
+                      setBillerInfo({ ...billerInfo, dl_no: e.target.value })
                     }
                   />
                 </Form.Group>
